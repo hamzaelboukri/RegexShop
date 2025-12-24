@@ -2,9 +2,7 @@ version: "3.8"
 
 services:
 
-  # ============================
-  # 🟦 PostgreSQL (Database)
-  # ============================
+  #  PostgreSQL (Database)
   postgres:
     image: postgres:15
     container_name: youshop-postgres
@@ -18,9 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # ============================
-  # 🟧 RabbitMQ (Message Broker)
-  # ============================
+  #  RabbitMQ (Message Broker)
   rabbitmq:
     image: rabbitmq:3-management
     container_name: youshop-rabbitmq
@@ -32,9 +28,7 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
 
-  # ============================
-  # 🟩 Auth Service
-  # ============================
+  #  Auth Service
   auth-service:
     build: ./auth-service
     container_name: auth-service
@@ -48,9 +42,7 @@ services:
     ports:
       - "3001:3000"
 
-  # ============================
-  # 🟦 Catalog Service
-  # ============================
+  #  Catalog Service
   catalog-service:
     build: ./catalog-service
     container_name: catalog-service
@@ -64,9 +56,7 @@ services:
     ports:
       - "3002:3000"
 
-  # ============================
-  # 🟪 Inventory Service
-  # ============================
+  #  Inventory Service
   inventory-service:
     build: ./inventory-service
     container_name: inventory-service
@@ -80,9 +70,7 @@ services:
     ports:
       - "3003:3000"
 
-  # ============================
-  # 🟥 Orders Service
-  # ============================
+  #  Orders Service
   orders-service:
     build: ./orders-service
     container_name: orders-service
@@ -96,9 +84,7 @@ services:
     ports:
       - "3004:3000"
 
-  # ============================
-  # 🟨 API Gateway
-  # ============================
+  # API Gateway
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway

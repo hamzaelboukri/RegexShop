@@ -14,17 +14,34 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  #  RabbitMQ (Message Broker)
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: youshop-rabbitmq
+  #  Zookeeper (for Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: youshop-zookeeper
     restart: always
-    ports:
-      - "5672:5672"     # Message broker
-      - "15672:15672"   # Dashboard management
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  #  Kafka (Message Broker)
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: youshop-kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   #  Auth Service
   auth-service:
@@ -33,10 +50,10 @@ services:
     restart: always
     depends_on:
       - postgres
-      - rabbitmq
+      - kafka
     environment:
       DATABASE_URL: "postgresql://postgres:123456@postgres:5432/auth?schema=public"
-      RABBITMQ_URL: "amqp://rabbitmq:5672"
+      KAFKA_BROKER: "kafka:9092"
     ports:
       - "3001:3000"
 
@@ -47,10 +64,10 @@ services:
     restart: always
     depends_on:
       - postgres
-      - rabbitmq
+      - kafka
     environment:
       DATABASE_URL: "postgresql://postgres:123456@postgres:5432/catalog?schema=public"
-      RABBITMQ_URL: "amqp://rabbitmq:5672"
+      KAFKA_BROKER: "kafka:9092"
     ports:
       - "3002:3000"
 
@@ -61,10 +78,10 @@ services:
     restart: always
     depends_on:
       - postgres
-      - rabbitmq
+      - kafka
     environment:
       DATABASE_URL: "postgresql://postgres:123456@postgres:5432/inventory?schema=public"
-      RABBITMQ_URL: "amqp://rabbitmq:5672"
+      KAFKA_BROKER: "kafka:9092"
     ports:
       - "3003:3000"
 
@@ -75,10 +92,10 @@ services:
     restart: always
     depends_on:
       - postgres
-      - rabbitmq
+      - kafka
     environment:
       DATABASE_URL: "postgresql://postgres:123456@postgres:5432/orders?schema=public"
-      RABBITMQ_URL: "amqp://rabbitmq:5672"
+      KAFKA_BROKER: "kafka:9092"
     ports:
       - "3004:3000"
 
@@ -93,7 +110,7 @@ services:
       - inventory-service
       - orders-service
     environment:
-      RABBITMQ_URL: "amqp://rabbitmq:5672"
+      KAFKA_BROKER: "kafka:9092"
     ports:
       - "3000:3000"
 

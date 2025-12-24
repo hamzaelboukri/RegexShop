@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+
+  # ============================
+  # 🟦 PostgreSQL (Database)
+  # ============================
+  postgres:
+    image: postgres:15
+    container_name: youshop-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: youshop
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ============================
+  # 🟧 RabbitMQ (Message Broker)
+  # ============================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: youshop-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"     # Message broker
+      - "15672:15672"   # Dashboard management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  # ============================
+  # 🟩 Auth Service
+  # ============================
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    restart: always
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://postgres:123456@postgres:5432/auth?schema=public"
+      RABBITMQ_URL: "amqp://rabbitmq:5672"
+    ports:
+      - "3001:3000"
+
+  # ============================
+  # 🟦 Catalog Service
+  # ============================
+  catalog-service:
+    build: ./catalog-service
+    container_name: catalog-service
+    restart: always
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://postgres:123456@postgres:5432/catalog?schema=public"
+      RABBITMQ_URL: "amqp://rabbitmq:5672"
+    ports:
+      - "3002:3000"
+
+  # ============================
+  # 🟪 Inventory Service
+  # ============================
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    restart: always
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://postgres:123456@postgres:5432/inventory?schema=public"
+      RABBITMQ_URL: "amqp://rabbitmq:5672"
+    ports:
+      - "3003:3000"
+
+  # ============================
+  # 🟥 Orders Service
+  # ============================
+  orders-service:
+    build: ./orders-service
+    container_name: orders-service
+    restart: always
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://postgres:123456@postgres:5432/orders?schema=public"
+      RABBITMQ_URL: "amqp://rabbitmq:5672"
+    ports:
+      - "3004:3000"
+
+  # ============================
+  # 🟨 API Gateway
+  # ============================
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    restart: always
+    depends_on:
+      - auth-service
+      - catalog-service
+      - inventory-service
+      - orders-service
+    environment:
+      RABBITMQ_URL: "amqp://rabbitmq:5672"
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

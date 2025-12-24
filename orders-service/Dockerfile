@@ -1,5 +1,5 @@
 # ---- BASE ----
-FROM node:18
+FROM node:20
 
 WORKDIR /app
 
@@ -9,6 +9,9 @@ RUN npm install
 
 # Copier le reste du code
 COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 # Build NestJS
 RUN npm run build

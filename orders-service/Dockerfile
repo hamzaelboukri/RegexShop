@@ -1,27 +1,55 @@
-# ---- BASE ----
-FROM node:20-slim
+# ---- BUILDER ----
+FROM node:20-slim AS builder
 
 # Install OpenSSL and other dependencies for Prisma
 RUN apt-get update -y && apt-get install -y openssl
 
 WORKDIR /app
 
-# Installer dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm install
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
 
-# Copier le reste du code
-COPY . .
+# Install dependencies
+RUN npm ci
+
+# Copy source code and prisma schema
+COPY src ./src
+COPY prisma ./prisma
 
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build NestJS
+# Build NestJS application
 RUN npm run build
 
-# Exposer le port
+# ---- PRODUCTION ----
+FROM node:20-slim
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production
+
+# Copy built application from builder
+COPY --from=builder /app/dist ./dist
+
+# Copy prisma schema for migrations
+COPY prisma ./prisma
+
+# Generate Prisma Client for production
+RUN npx prisma generate
+
+# Expose port
 EXPOSE 3000
 
-# Commande de lancement
-CMD ["npm", "run", "start:prod"]
+# Start command
+CMD ["node", "dist/src/main"]
 

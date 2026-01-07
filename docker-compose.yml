@@ -98,6 +98,10 @@ services:
     environment:
       DATABASE_URL: "postgresql://postgres:123456@postgres-auth:5432/auth"
       KAFKA_BROKER: "kafka:9092"
+      ENABLE_KAFKA: "false"
+      JWT_SECRET: "youshop-secret-key"
+      NODE_ENV: "production"
+      PORT: "3000"
     ports:
       - "3001:3000"
 
@@ -114,6 +118,10 @@ services:
     environment:
       DATABASE_URL: "postgresql://postgres:123456@postgres-catalog:5432/catalog"
       KAFKA_BROKER: "kafka:9092"
+      ENABLE_KAFKA: "false"
+      JWT_SECRET: "youshop-secret-key"
+      NODE_ENV: "production"
+      PORT: "3000"
     ports:
       - "3002:3000"
 

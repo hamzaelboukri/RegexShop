@@ -10,6 +10,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
+COPY prisma.config.ts ./
 
 # Install dependencies
 RUN npm ci
@@ -41,8 +42,9 @@ RUN npm ci --only=production
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy prisma schema for migrations
+# Copy prisma schema and config for migrations
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 # Generate Prisma Client for production
 RUN npx prisma generate

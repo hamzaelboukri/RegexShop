@@ -1,14 +1,50 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model InventoryItem {
+  id        String   @id @default(uuid())
+  sku       String   @unique // Stock Keeping Unit - unique identifier for the product variant
+  productId String   // Reference to product in catalog-service
+  name      String   // Product name for display
+  available Int      @default(0) // Quantity available for sale
+  reserved  Int      @default(0) // Quantity reserved in pending orders
+  total     Int      @default(0) // Total physical stock (available + reserved)
+  lowStockThreshold Int @default(10) // Alert threshold for low stock
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([sku])
+  @@map("inventory_items")
+}
+
+model StockMovement {
+  id              String   @id @default(uuid())
+  inventoryItemId String
+  type            MovementType // IN, OUT, RESERVE, RELEASE
+  quantity        Int
+  reason          String? // Optional reason for the movement
+  orderId         String? // Reference to order if applicable
+  performedBy     String? // User ID who performed the action
+  createdAt       DateTime @default(now())
+
+  @@index([inventoryItemId])
+  @@index([orderId])
+  @@map("stock_movements")
+}
+
+enum MovementType {
+  IN        // Stock added
+  OUT       // Stock removed
+  RESERVE   // Stock reserved for order
+  RELEASE   // Reserved stock released back
 }

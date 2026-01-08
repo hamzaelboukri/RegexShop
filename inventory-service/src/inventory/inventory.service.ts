@@ -177,7 +177,6 @@ export class InventoryService {
         available: newAvailable,
       },
     });
-
     // Record stock movement
     await this.createStockMovement(
       id,

@@ -12,11 +12,12 @@ COPY tsconfig*.json ./
 COPY nest-cli.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # Copy source code and prisma schema
 COPY src ./src
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -36,19 +37,21 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production
+RUN npm install --only=production --legacy-peer-deps
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/generated ./generated
+COPY --from=builder /app/generated ./dist/generated
 
-# Copy prisma schema for migrations
+# Copy prisma schema (for reference)
 COPY prisma ./prisma
-
-# Generate Prisma Client for production
-RUN npx prisma generate
 
 # Expose port
 EXPOSE 3000
+
+# Set NODE_PATH so modules can be found
+ENV NODE_PATH=/app
 
 # Start command
 CMD ["node", "dist/src/main"]

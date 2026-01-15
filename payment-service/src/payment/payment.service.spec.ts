@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus } from '../../generated/prisma';
 
 describe('PaymentService', () => {
   let service: PaymentService;

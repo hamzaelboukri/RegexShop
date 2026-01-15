@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationService } from './notification.service';
 import { EmailService } from '../email/email.service';
-import { NotificationType, ChannelType } from '@prisma/client';
+import { NotificationType, ChannelType } from '../../generated/prisma';
 
 /**
  * Event handler for internal events that trigger notifications

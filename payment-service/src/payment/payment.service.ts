@@ -9,7 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService, CreateCheckoutSessionParams, CheckoutSessionResult } from './stripe.service';
 import { CreatePaymentDto, PaymentResponseDto, RefundPaymentDto } from '../dto';
-import { PaymentStatus, TransactionType, TransactionStatus, Prisma } from '@prisma/client';
+import { PaymentStatus, TransactionType, TransactionStatus, Prisma } from '../../generated/prisma';
 import { randomUUID } from 'crypto';
 
 @Injectable()

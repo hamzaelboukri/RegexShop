@@ -44,7 +44,7 @@ export class StripeService {
     }
 
     this.stripe = new Stripe(secretKey || 'sk_test_placeholder', {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2023-10-16',
       typescript: true,
     });
   }

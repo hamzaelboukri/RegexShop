@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Payment {
+  id      String @id @default(uuid())
+  orderId String @unique // Reference to order from orders-service
+  userId  String // Reference to user from auth-service
+
+  // Stripe details
+  stripeSessionId       String? @unique
+  stripePaymentIntentId String? @unique
+  stripeCustomerId      String?
+
+  // Payment details
+  amount   Decimal       @db.Decimal(10, 2)
+  currency String        @default("USD")
+  status   PaymentStatus @default(PENDING)
+
+  // Idempotency
+  idempotencyKey String @unique
+
+  // Metadata
+  metadata     Json?
+  errorMessage String?
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime?
+
+  // Relations
+  transactions PaymentTransaction[]
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([stripeSessionId])
+  @@index([stripePaymentIntentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+model PaymentTransaction {
+  id        String  @id @default(uuid())
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  // Transaction details
+  type     TransactionType
+  status   TransactionStatus
+  amount   Decimal           @db.Decimal(10, 2)
+  currency String            @default("USD")
+
+  // Stripe event details
+  stripeEventId   String? @unique
+  stripeEventType String?
+
+  // Audit trail
+  rawPayload   Json?
+  errorDetails String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([stripeEventId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("payment_transactions")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum TransactionType {
+  CHECKOUT_SESSION_CREATED
+  CHECKOUT_SESSION_COMPLETED
+  CHECKOUT_SESSION_EXPIRED
+  PAYMENT_INTENT_CREATED
+  PAYMENT_INTENT_SUCCEEDED
+  PAYMENT_INTENT_FAILED
+  PAYMENT_INTENT_CANCELLED
+  REFUND_CREATED
+  REFUND_SUCCEEDED
+  REFUND_FAILED
+  WEBHOOK_RECEIVED
+}
+
+enum TransactionStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}

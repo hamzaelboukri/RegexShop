@@ -1,57 +1,27 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-
-let PrismaClient: any;
-
-// Dynamic import to avoid build-time issues
-async function getPrismaClient() {
-  if (!PrismaClient) {
-    const module = (await import('@prisma/client')) as any;
-    PrismaClient = module.PrismaClient;
-  }
-  return PrismaClient;
-}
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { PrismaClient } from '../../generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
-export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  private prismaClient: any;
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PrismaService.name);
 
-  async initClient() {
-    const PC = await getPrismaClient();
-    if (!this.prismaClient) {
-      this.prismaClient = new PC();
-    }
-    return this.prismaClient;
+  constructor() {
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+    const adapter = new PrismaPg(pool);
+    super({ adapter });
   }
 
-  // Proxy all properties and methods to the actual PrismaClient
-  get order() {
-    return this.prismaClient.order;
+  async onModuleInit(): Promise<void> {
+    await this.$connect();
+    this.logger.log('Connected to the database');
   }
 
-  get orderItem() {
-    return this.prismaClient.orderItem;
-  }
-
-  $queryRaw(query: any) {
-    return this.prismaClient.$queryRaw(query);
-  }
-
-  $executeRaw(query: any) {
-    return this.prismaClient.$executeRaw(query);
-  }
-
-  $transaction(fn: any) {
-    return this.prismaClient.$transaction(fn);
-  }
-
-  async onModuleInit() {
-    await this.initClient();
-    await this.prismaClient.$connect();
-  }
-
-  async onModuleDestroy() {
-    if (this.prismaClient) {
-      await this.prismaClient.$disconnect();
-    }
+  async onModuleDestroy(): Promise<void> {
+    await this.$disconnect();
+    this.logger.log('Disconnected from the database');
   }
 }

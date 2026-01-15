@@ -29,7 +29,7 @@ import {
   UpdatePreferencesDto,
   PreferencesResponseDto,
 } from '../dto';
-import { ChannelType, NotificationType } from '@prisma/client';
+import { ChannelType, NotificationType } from '../../generated/prisma';
 
 @ApiTags('notifications')
 @Controller('notifications')

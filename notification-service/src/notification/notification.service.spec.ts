@@ -5,7 +5,7 @@ import { WebsocketGateway } from '../websocket/websocket.gateway';
 import { EmailService } from '../email/email.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotFoundException } from '@nestjs/common';
-import { NotificationType, NotificationStatus, ChannelType, DeliveryStatus } from '@prisma/client';
+import { NotificationType, NotificationStatus, ChannelType, DeliveryStatus } from '../../generated/prisma';
 
 describe('NotificationService', () => {
   let service: NotificationService;

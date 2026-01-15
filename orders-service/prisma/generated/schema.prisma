@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Order Status Enum
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+// Payment Status Enum
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// Order Model
+model Order {
+  id          String      @id @default(uuid())
+  orderNumber String      @unique @default(cuid())
+  userId      String
+  status      OrderStatus @default(PENDING)
+
+  // Pricing
+  subtotal    Float
+  taxAmount   Float
+  totalAmount Float
+
+  // Payment
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String?
+
+  // Shipping
+  shippingAddress Json?
+  billingAddress  Json?
+
+  // Metadata
+  notes String?
+
+  // Relations
+  items OrderItem[]
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  paidAt      DateTime?
+  cancelledAt DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+// Order Items Model
+model OrderItem {
+  id      String @id @default(uuid())
+  orderId String
+
+  // Product Info (denormalized for historical record)
+  productId   String
+  sku         String
+  productName String
+
+  // Pricing
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+
+  // Metadata
+  metadata Json? // Can store product attributes at time of order
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([sku])
+  @@map("order_items")
+}

@@ -4,7 +4,7 @@ import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { TemplateService } from './template.service';
-import { EmailStatus } from '@prisma/client';
+import { EmailStatus } from '../../generated/prisma';
 
 export interface SendEmailOptions {
   to: string;

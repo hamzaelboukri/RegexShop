@@ -9,12 +9,13 @@ import {
   ChannelType,
   DeliveryStatus,
   Prisma,
-} from '@prisma/client';
+} from '../../generated/prisma';
 import {
   CreateNotificationDto,
   NotificationResponseDto,
   UpdatePreferencesDto,
   PreferencesResponseDto,
+  ChannelTypeEnum,
 } from '../dto';
 
 export interface SendNotificationOptions {
@@ -94,7 +95,7 @@ export class NotificationService {
     const allSucceeded = results.every((r) => r.status === 'fulfilled' && r.value);
     const anySucceeded = results.some((r) => r.status === 'fulfilled' && r.value);
 
-    let status = NotificationStatus.FAILED;
+    let status: NotificationStatus = NotificationStatus.FAILED;
     if (allSucceeded) {
       status = NotificationStatus.SENT;
     } else if (anySucceeded) {
@@ -410,7 +411,7 @@ export class NotificationService {
       createdAt: notification.createdAt,
       sentAt: notification.sentAt || undefined,
       channels: notification.channels?.map((c) => ({
-        channel: c.channel,
+        channel: c.channel as unknown as ChannelTypeEnum,
         status: c.status,
         sentAt: c.sentAt || undefined,
         errorMessage: c.errorMessage || undefined,

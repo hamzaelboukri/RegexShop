@@ -58,6 +58,32 @@ services:
     volumes:
       - postgres_orders_data:/var/lib/postgresql/data
 
+  postgres-payments:
+    image: postgres:15
+    container_name: postgres-payments
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: payments
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_payments_data:/var/lib/postgresql/data
+
+  postgres-notifications:
+    image: postgres:15
+    container_name: postgres-notifications
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: notifications
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres_notifications_data:/var/lib/postgresql/data
+
   # ----------------------
   # Zookeeper for Kafka
   # ----------------------
@@ -165,6 +191,55 @@ services:
       - "3004:3000"
 
   # ----------------------
+  # Payment Service
+  # ----------------------
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    restart: always
+    depends_on:
+      - postgres-payments
+      - kafka
+    environment:
+      DATABASE_URL: "postgresql://postgres:123456@postgres-payments:5432/payments"
+      KAFKA_BROKER: "kafka:9092"
+      JWT_SECRET: "youshop-secret-key"
+      NODE_ENV: "production"
+      PORT: "3000"
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-sk_test_placeholder}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}"
+      FRONTEND_URL: "http://localhost:3000"
+      NOTIFICATION_SERVICE_URL: "http://notification-service:3000"
+    ports:
+      - "3005:3000"
+
+  # ----------------------
+  # Notification Service
+  # ----------------------
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    restart: always
+    depends_on:
+      - postgres-notifications
+      - kafka
+    environment:
+      DATABASE_URL: "postgresql://postgres:123456@postgres-notifications:5432/notifications"
+      KAFKA_BROKER: "kafka:9092"
+      JWT_SECRET: "youshop-secret-key"
+      NODE_ENV: "production"
+      PORT: "3000"
+      SMTP_HOST: "${SMTP_HOST:-smtp.gmail.com}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      SMTP_FROM_EMAIL: "${SMTP_FROM_EMAIL:-noreply@regexshop.com}"
+      SMTP_FROM_NAME: "${SMTP_FROM_NAME:-Regex Shop}"
+      FRONTEND_URL: "http://localhost:3000"
+    ports:
+      - "3006:3000"
+
+  # ----------------------
   # API Gateway
   # ----------------------
   api-gateway:
@@ -176,6 +251,8 @@ services:
       - catalog-service
       - inventory-service
       - orders-service
+      - payment-service
+      - notification-service
     environment:
       KAFKA_BROKER: "kafka:9092"
     ports:
@@ -186,3 +263,5 @@ volumes:
   postgres_catalog_data:
   postgres_inventory_data:
   postgres_orders_data:
+  postgres_payments_data:
+  postgres_notifications_data:

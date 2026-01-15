@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Notification {
+  id          String              @id @default(uuid())
+  userId      String
+  
+  // Notification content
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?               // Additional data (orderId, paymentId, etc.)
+  
+  // Delivery status
+  channels    NotificationChannel[]
+  status      NotificationStatus  @default(PENDING)
+  
+  // Read status
+  isRead      Boolean             @default(false)
+  readAt      DateTime?
+  
+  // Timestamps
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  sentAt      DateTime?
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationChannel {
+  id              String          @id @default(uuid())
+  notificationId  String
+  notification    Notification    @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  
+  channel         ChannelType
+  status          DeliveryStatus  @default(PENDING)
+  
+  // Delivery details
+  recipient       String?         // Email address, device token, etc.
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  failedAt        DateTime?
+  errorMessage    String?
+  
+  // Retry tracking
+  retryCount      Int             @default(0)
+  nextRetryAt     DateTime?
+
+  @@index([notificationId])
+  @@index([channel])
+  @@index([status])
+  @@map("notification_channels")
+}
+
+model UserPreference {
+  id              String          @id @default(uuid())
+  userId          String          @unique
+  
+  // Channel preferences
+  emailEnabled    Boolean         @default(true)
+  websocketEnabled Boolean        @default(true)
+  
+  // Notification type preferences
+  orderUpdates    Boolean         @default(true)
+  paymentAlerts   Boolean         @default(true)
+  stockAlerts     Boolean         @default(true)
+  promotions      Boolean         @default(false)
+  
+  // Email settings
+  email           String?
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("user_preferences")
+}
+
+model EmailLog {
+  id            String        @id @default(uuid())
+  
+  // Email details
+  to            String
+  from          String
+  subject       String
+  templateName  String?
+  
+  // Status
+  status        EmailStatus   @default(PENDING)
+  messageId     String?       // From email provider
+  
+  // Error tracking
+  errorMessage  String?
+  retryCount    Int           @default(0)
+  
+  // Timestamps
+  createdAt     DateTime      @default(now())
+  sentAt        DateTime?
+
+  @@index([to])
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_logs")
+}
+
+enum NotificationType {
+  ORDER_CREATED
+  ORDER_CONFIRMED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
+  STOCK_LOW
+  STOCK_CRITICAL
+  STOCK_REPLENISHED
+  PROMOTION
+  SYSTEM
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  PARTIALLY_SENT
+  FAILED
+}
+
+enum ChannelType {
+  EMAIL
+  WEBSOCKET
+  PUSH
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+}

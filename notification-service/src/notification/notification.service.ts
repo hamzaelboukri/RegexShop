@@ -9,7 +9,7 @@ import {
   ChannelType,
   DeliveryStatus,
   Prisma,
-} from '../../generated/prisma';
+} from '@prisma/client';
 import {
   CreateNotificationDto,
   NotificationResponseDto,
@@ -286,7 +286,7 @@ export class NotificationService {
     ]);
 
     return {
-      notifications: notifications.map((n) => this.mapToResponseDto(n)),
+      notifications: notifications.map((n: any) => this.mapToResponseDto(n)),
       total,
       unreadCount,
     };
@@ -410,7 +410,7 @@ export class NotificationService {
       readAt: notification.readAt || undefined,
       createdAt: notification.createdAt,
       sentAt: notification.sentAt || undefined,
-      channels: notification.channels?.map((c) => ({
+      channels: notification.channels?.map((c: any) => ({
         channel: c.channel as unknown as ChannelTypeEnum,
         status: c.status,
         sentAt: c.sentAt || undefined,

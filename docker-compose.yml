@@ -266,6 +266,22 @@ services:
     ports:
       - "3000:3000"
 
+  # ----------------------
+  # Frontend (YouShop)
+  # ----------------------
+  frontend:
+    build: ./youshop-frontend
+    container_name: youshop-frontend
+    restart: always
+    depends_on:
+      - api-gateway
+    environment:
+      NEXT_PUBLIC_API_URL: "http://api-gateway:3000"
+      NEXT_PUBLIC_WS_URL: "http://api-gateway:3000"
+      NEXT_PUBLIC_STRIPE_PUBLIC_KEY: "${STRIPE_PUBLIC_KEY:-pk_test_placeholder}"
+    ports:
+      - "3007:3001"
+
 volumes:
   postgres_auth_data:
   postgres_catalog_data:

@@ -12,7 +12,10 @@ export interface JwtPayload {
 }
 
 export interface AuthResponse {
-  access_token: string;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
   user: {
     id: string;
     email: string;
@@ -38,7 +41,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Un compte avec cet email existe déjà');
     }
 
     // Hash password
@@ -63,10 +66,14 @@ export class AuthService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
-      access_token,
+      tokens: {
+        accessToken,
+        refreshToken,
+      },
       user: {
         id: user.id,
         email: user.email,
@@ -108,10 +115,14 @@ export class AuthService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
-      access_token,
+      tokens: {
+        accessToken,
+        refreshToken,
+      },
       user: {
         id: user.id,
         email: user.email,

@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/stores/auth.store';
+import { useAuth, useAuthStore } from '@/stores/auth.store';
 import { loginSchema, LoginFormData } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,7 +36,16 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       toast.success('Connexion réussie !');
-      router.push(redirect);
+      
+      // Get updated user from store to check role
+      const authState = useAuthStore.getState();
+      const isAdmin = authState.user?.role?.toString().toUpperCase() === 'ADMIN';
+      
+      if (isAdmin) {
+        router.push('/admin');
+      } else {
+        router.push(redirect);
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Email ou mot de passe incorrect';
       toast.error(errorMessage);

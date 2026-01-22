@@ -134,7 +134,7 @@ export const useAuth = () => {
     isAuthenticated: store.isAuthenticated,
     isLoading: store.isLoading,
     isInitialized: store.isInitialized,
-    isAdmin: store.user?.role === UserRole.ADMIN,
+    isAdmin: store.user?.role?.toString().toUpperCase() === 'ADMIN',
     login: store.login,
     register: store.register,
     logout: store.logout,

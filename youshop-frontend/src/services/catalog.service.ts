@@ -25,10 +25,10 @@ export const productsApi = {
       if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.limit) params.append('limit', filters.limit.toString());
 
-      const response = await apiClient.get<PaginatedResponse<Product>>(
+      const response = await apiClient.get<ApiResponse<PaginatedResponse<Product>>>(
         `${CATALOG_PREFIX}/products?${params.toString()}`
       );
-      return response.data;
+      return response.data.data;
     } catch (error) {
       throw handleApiError(error);
     }

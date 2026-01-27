@@ -1,39 +1,117 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, X, Plus, Loader2, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, X, Loader2, Plus, Trash2, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { productSchema, type ProductFormData } from '@/lib/validations';
-import { useCreateProduct, useCategories } from '@/hooks/use-products';
+import { z } from 'zod';
+import { useCategories } from '@/hooks/use-products';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Product } from '@/types';
 
-export default function NewProductPage() {
+// Schema for product form
+const productFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Le nom est requis')
+    .min(3, 'Le nom doit contenir au moins 3 caractères'),
+  description: z
+    .string()
+    .min(1, 'La description est requise')
+    .min(10, 'La description doit contenir au moins 10 caractères'),
+  price: z
+    .number()
+    .min(0.01, 'Le prix doit être supérieur à 0')
+    .max(999999.99, 'Le prix est trop élevé'),
+  comparePrice: z
+    .number()
+    .min(0, 'Le prix comparé doit être positif')
+    .optional()
+    .nullable(),
+  categoryId: z.string().uuid('Veuillez sélectionner une catégorie'),
+  sku: z
+    .string()
+    .min(1, 'Le SKU est requis')
+    .min(3, 'Le SKU doit contenir au moins 3 caractères'),
+  isActive: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
+});
+
+export type ProductFormData = z.infer<typeof productFormSchema>;
+
+interface ProductAttribute {
+  name: string;
+  value: string;
+}
+
+interface ProductFormProps {
+  product?: Product;
+  onSubmit: (data: ProductFormData & { images: string[]; attributes?: ProductAttribute[] }) => Promise<void>;
+  isLoading?: boolean;
+  submitLabel?: string;
+  title: string;
+  subtitle: string;
+}
+
+export default function ProductForm({
+  product,
+  onSubmit,
+  isLoading,
+  submitLabel = 'Enregistrer',
+  title,
+  subtitle,
+}: ProductFormProps) {
   const router = useRouter();
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>(product?.images || []);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [attributes, setAttributes] = useState<ProductAttribute[]>(
+    product?.attributes || []
+  );
 
   const { data: categories } = useCategories();
-  const createProduct = useCreateProduct();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
+    reset,
   } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
-      isActive: true,
-      isFeatured: false,
+      name: product?.name || '',
+      description: product?.description || '',
+      price: product?.price || 0,
+      comparePrice: product?.comparePrice || undefined,
+      categoryId: product?.categoryId || '',
+      sku: product?.sku || '',
+      isActive: product?.isActive ?? true,
+      isFeatured: product?.isFeatured ?? false,
     },
   });
+
+  useEffect(() => {
+    if (product) {
+      reset({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        comparePrice: product.comparePrice || undefined,
+        categoryId: product.categoryId,
+        sku: product.sku,
+        isActive: product.isActive,
+        isFeatured: product.isFeatured,
+      });
+      setImages(product.images || []);
+      setAttributes(product.attributes || []);
+    }
+  }, [product, reset]);
 
   const addImageUrl = () => {
     if (!newImageUrl.trim()) {
@@ -41,6 +119,7 @@ export default function NewProductPage() {
       return;
     }
     
+    // Basic URL validation
     try {
       new URL(newImageUrl);
     } catch {
@@ -57,23 +136,35 @@ export default function NewProductPage() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const onSubmit = async (data: ProductFormData) => {
+  const addAttribute = () => {
+    setAttributes((prev) => [...prev, { name: '', value: '' }]);
+  };
+
+  const updateAttribute = (index: number, field: 'name' | 'value', value: string) => {
+    setAttributes((prev) =>
+      prev.map((attr, i) => (i === index ? { ...attr, [field]: value } : attr))
+    );
+  };
+
+  const removeAttribute = (index: number) => {
+    setAttributes((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFormSubmit = async (data: ProductFormData) => {
     if (images.length === 0) {
       toast.error('Veuillez ajouter au moins une image');
       return;
     }
-    
-    try {
-      await createProduct.mutateAsync({
-        ...data,
-        images,
-        comparePrice: data.comparePrice ?? undefined,
-      });
-      toast.success('Produit créé avec succès');
-      router.push('/admin/products');
-    } catch (error: any) {
-      toast.error(error?.message || 'Erreur lors de la création');
-    }
+
+    const validAttributes = attributes.filter(
+      (attr) => attr.name.trim() && attr.value.trim()
+    );
+
+    await onSubmit({
+      ...data,
+      images,
+      attributes: validAttributes.length > 0 ? validAttributes : undefined,
+    });
   };
 
   return (
@@ -85,12 +176,12 @@ export default function NewProductPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Nouveau produit</h1>
-          <p className="text-muted-foreground">Créez un nouveau produit</p>
+          <h1 className="text-2xl font-bold">{title}</h1>
+          <p className="text-muted-foreground">{subtitle}</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main info */}
           <div className="space-y-6 lg:col-span-2">
@@ -104,9 +195,11 @@ export default function NewProductPage() {
                   <Input
                     id="name"
                     {...register('name')}
-                    error={errors.name?.message}
                     placeholder="Ex: T-shirt Premium"
                   />
+                  {errors.name && (
+                    <p className="text-sm text-destructive">{errors.name.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -130,9 +223,11 @@ export default function NewProductPage() {
                     <Input
                       id="sku"
                       {...register('sku')}
-                      error={errors.sku?.message}
                       placeholder="Ex: TSH-001"
                     />
+                    {errors.sku && (
+                      <p className="text-sm text-destructive">{errors.sku.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -159,6 +254,7 @@ export default function NewProductPage() {
               </CardContent>
             </Card>
 
+            {/* Images */}
             <Card>
               <CardHeader>
                 <CardTitle>Images</CardTitle>
@@ -201,13 +297,63 @@ export default function NewProductPage() {
                         >
                           <X className="h-4 w-4" />
                         </button>
+                        {index === 0 && (
+                          <span className="absolute bottom-2 left-2 rounded bg-primary px-2 py-1 text-xs text-white">
+                            Principal
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Ajoutez des URLs d&apos;images pour votre produit
+                  Ajoutez des URLs d&apos;images. La première sera l&apos;image principale.
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* Attributes */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Attributs</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={addAttribute}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ajouter
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {attributes.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aucun attribut. Ajoutez des attributs comme Taille, Couleur, Matière...
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {attributes.map((attr, index) => (
+                      <div key={index} className="flex gap-3">
+                        <Input
+                          placeholder="Nom (ex: Couleur)"
+                          value={attr.name}
+                          onChange={(e) => updateAttribute(index, 'name', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          placeholder="Valeur (ex: Rouge)"
+                          value={attr.value}
+                          onChange={(e) => updateAttribute(index, 'value', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeAttribute(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -216,23 +362,25 @@ export default function NewProductPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Prix</CardTitle>
+                <CardTitle>Prix & Stock</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Prix (MAD) *</Label>
+                  <Label htmlFor="price">Prix (€) *</Label>
                   <Input
                     id="price"
                     type="number"
                     step="0.01"
                     {...register('price', { valueAsNumber: true })}
-                    error={errors.price?.message}
                     placeholder="0.00"
                   />
+                  {errors.price && (
+                    <p className="text-sm text-destructive">{errors.price.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="comparePrice">Ancien prix (MAD)</Label>
+                  <Label htmlFor="comparePrice">Ancien prix (€)</Label>
                   <Input
                     id="comparePrice"
                     type="number"
@@ -240,6 +388,9 @@ export default function NewProductPage() {
                     {...register('comparePrice', { valueAsNumber: true })}
                     placeholder="0.00"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Affiche le prix barré pour montrer une réduction
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -248,23 +399,10 @@ export default function NewProductPage() {
               <CardHeader>
                 <CardTitle>Statut</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent>
                 <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    {...register('isActive')}
-                    defaultChecked={true}
-                    className="rounded"
-                  />
+                  <input type="checkbox" {...register('isActive')} className="rounded" />
                   <span className="text-sm">Produit actif</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    {...register('isFeatured')}
-                    className="rounded"
-                  />
-                  <span className="text-sm">Produit en vedette</span>
                 </label>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Les produits inactifs ne sont pas visibles dans la boutique
@@ -281,12 +419,9 @@ export default function NewProductPage() {
               >
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                className="flex-1"
-                isLoading={isSubmitting || createProduct.isPending}
-              >
-                Créer
+              <Button type="submit" className="flex-1" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitLabel}
               </Button>
             </div>
           </div>

@@ -65,7 +65,7 @@ export const useCartStore = create<CartState>()(
           // Update quantity if item exists
           newItems = items.map((item) =>
             item.productId === product.id
-              ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock) }
+              ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock ?? 999) }
               : item
           );
         } else {
@@ -74,7 +74,7 @@ export const useCartStore = create<CartState>()(
             id: `cart-${product.id}-${Date.now()}`,
             productId: product.id,
             product,
-            quantity: Math.min(quantity, product.stock),
+            quantity: Math.min(quantity, product.stock ?? 999),
             price: product.price,
           };
           newItems = [...items, newItem];
@@ -104,7 +104,7 @@ export const useCartStore = create<CartState>()(
 
         const newItems = items.map((item) =>
           item.productId === productId
-            ? { ...item, quantity: Math.min(quantity, item.product.stock) }
+            ? { ...item, quantity: Math.min(quantity, item.product.stock ?? 999) }
             : item
         );
 

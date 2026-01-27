@@ -430,7 +430,17 @@ export class ProductsService {
    */
   private async invalidateProductCache(): Promise<void> {
     // Clear all product-related cache keys
-    // Note: In production, you'd use Redis with pattern matching
-    this.logger.debug('Product cache invalidated');
+    try {
+      // Get the underlying store and clear it
+      const store = (this.cacheManager as any).store;
+      if (store && typeof store.reset === 'function') {
+        await store.reset();
+      } else if (store && typeof store.clear === 'function') {
+        await store.clear();
+      }
+      this.logger.debug('Product cache invalidated');
+    } catch (error) {
+      this.logger.error('Failed to invalidate cache', error);
+    }
   }
 }

@@ -4,17 +4,20 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  compareAtPrice?: number;
+  comparePrice?: number;
   images: string[];
   category: Category;
   categoryId: string;
   sku: string;
-  stock: number;
+  stock?: number;
   isActive: boolean;
+  isFeatured?: boolean;
   attributes?: ProductAttribute[];
   reviews?: Review[];
   rating?: number;
   reviewCount?: number;
+  tags?: string[];
+  metadata?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
 }

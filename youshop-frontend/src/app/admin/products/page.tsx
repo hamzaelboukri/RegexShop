@@ -185,7 +185,7 @@ export default function AdminProductsPage() {
                     </tr>
                   ))
                 : productsData?.data.map((product) => {
-                    const stockStatus = getStockStatus(product.stock);
+                    const stockStatus = getStockStatus(product.stock ?? 0);
                     return (
                       <tr key={product.id} className="border-b hover:bg-muted/50">
                         <td className="p-4">
@@ -224,14 +224,14 @@ export default function AdminProductsPage() {
                             <p className="font-medium">
                               {formatPrice(product.price)}
                             </p>
-                            {product.compareAtPrice && (
+                            {product.comparePrice && (
                               <p className="text-sm text-muted-foreground line-through">
-                                {formatPrice(product.compareAtPrice)}
+                                {formatPrice(product.comparePrice)}
                               </p>
                             )}
                           </div>
                         </td>
-                        <td className="p-4">{product.stock}</td>
+                        <td className="p-4">{product.stock ?? 0}</td>
                         <td className="p-4">
                           <Badge
                             variant={

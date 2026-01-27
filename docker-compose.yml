@@ -276,8 +276,8 @@ services:
     depends_on:
       - api-gateway
     environment:
-      NEXT_PUBLIC_API_URL: "http://api-gateway:3000"
-      NEXT_PUBLIC_WS_URL: "http://api-gateway:3000"
+      NEXT_PUBLIC_API_URL: "http://localhost:3000"
+      NEXT_PUBLIC_WS_URL: "http://localhost:3000"
       NEXT_PUBLIC_STRIPE_PUBLIC_KEY: "${STRIPE_PUBLIC_KEY:-pk_test_placeholder}"
     ports:
       - "3007:3001"

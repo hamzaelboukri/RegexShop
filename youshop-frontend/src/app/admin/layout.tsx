@@ -8,12 +8,9 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
-  Users,
-  Settings,
-  Bell,
-  BarChart3,
   LogOut,
   Menu,
+  FolderTree,
 } from 'lucide-react';
 import { useAuth } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
@@ -22,11 +19,8 @@ import { useState } from 'react';
 const adminNavigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Produits', href: '/admin/products', icon: Package },
+  { name: 'Catégories', href: '/admin/categories', icon: FolderTree },
   { name: 'Commandes', href: '/admin/orders', icon: ShoppingCart },
-  { name: 'Clients', href: '/admin/customers', icon: Users },
-  { name: 'Statistiques', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { name: 'Paramètres', href: '/admin/settings', icon: Settings },
 ];
 
 export default function AdminLayout({

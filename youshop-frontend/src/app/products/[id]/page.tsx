@@ -58,12 +58,12 @@ export default function ProductPage() {
     );
   }
 
-  const discount = product.compareAtPrice
-    ? calculateDiscount(product.price, product.compareAtPrice)
+  const discount = product.comparePrice
+    ? calculateDiscount(product.price, product.comparePrice)
     : 0;
-  const stockStatus = getStockStatus(product.stock);
+  const stockStatus = getStockStatus(product.stock ?? 0);
   const cartQuantity = getItemQuantity(product.id);
-  const maxQuantity = product.stock - cartQuantity;
+  const maxQuantity = (product.stock ?? 0) - cartQuantity;
 
   const handleAddToCart = () => {
     if (quantity > maxQuantity) {
@@ -227,9 +227,9 @@ export default function ProductPage() {
             <span className="text-3xl font-bold text-primary">
               {formatPrice(product.price)}
             </span>
-            {product.compareAtPrice && (
+            {product.comparePrice && (
               <span className="text-xl text-muted-foreground line-through">
-                {formatPrice(product.compareAtPrice)}
+                {formatPrice(product.comparePrice)}
               </span>
             )}
             {discount > 0 && (
@@ -278,7 +278,7 @@ export default function ProductPage() {
           )}
 
           {/* Add to cart */}
-          {product.stock > 0 && (
+          {(product.stock ?? 0) > 0 && (
             <div className="flex items-center gap-4">
               {/* Quantity selector */}
               <div className="flex items-center rounded-md border">

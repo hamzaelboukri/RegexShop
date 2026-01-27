@@ -125,7 +125,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             <span className="w-8 text-center">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              disabled={item.quantity >= item.product.stock}
+                              disabled={item.quantity >= (item.product.stock ?? 999)}
                               className="rounded-md border p-1 hover:bg-muted disabled:opacity-50"
                             >
                               <Plus className="h-4 w-4" />

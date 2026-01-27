@@ -82,28 +82,18 @@ export const productSchema = z.object({
     .number()
     .min(0.01, 'Le prix doit être supérieur à 0')
     .max(999999.99, 'Le prix est trop élevé'),
-  compareAtPrice: z
+  comparePrice: z
     .number()
     .min(0, 'Le prix comparé doit être positif')
     .optional()
     .nullable(),
-  categoryId: z.string().min(1, 'La catégorie est requise'),
+  categoryId: z.string().uuid('Veuillez sélectionner une catégorie'),
   sku: z
     .string()
     .min(1, 'Le SKU est requis')
-    .regex(/^[A-Z0-9-]+$/, 'SKU invalide (lettres majuscules, chiffres et tirets uniquement)'),
-  stock: z
-    .number()
-    .int('Le stock doit être un nombre entier')
-    .min(0, 'Le stock ne peut pas être négatif'),
+    .min(3, 'Le SKU doit contenir au moins 3 caractères'),
   isActive: z.boolean().default(true),
-  images: z.array(z.string().url('URL d\'image invalide')).min(1, 'Au moins une image est requise'),
-  attributes: z.array(
-    z.object({
-      name: z.string().min(1, 'Le nom de l\'attribut est requis'),
-      value: z.string().min(1, 'La valeur de l\'attribut est requise'),
-    })
-  ).optional(),
+  isFeatured: z.boolean().default(false),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;

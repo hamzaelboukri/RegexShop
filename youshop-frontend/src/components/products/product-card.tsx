@@ -18,16 +18,16 @@ interface ProductCardProps {
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addItem, isInCart } = useCart();
-  const discount = product.compareAtPrice 
-    ? calculateDiscount(product.price, product.compareAtPrice) 
+  const discount = product.comparePrice 
+    ? calculateDiscount(product.price, product.comparePrice) 
     : 0;
-  const stockStatus = getStockStatus(product.stock);
+  const stockStatus = getStockStatus(product.stock ?? 0);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (product.stock === 0) {
+    if ((product.stock ?? 0) === 0) {
       toast.error('Produit en rupture de stock');
       return;
     }
@@ -62,10 +62,10 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               {discount > 0 && (
                 <Badge variant="destructive">-{discount}%</Badge>
               )}
-              {product.stock <= 5 && product.stock > 0 && (
+              {(product.stock ?? 0) <= 5 && (product.stock ?? 0) > 0 && (
                 <Badge variant="warning">Stock limité</Badge>
               )}
-              {product.stock === 0 && (
+              {(product.stock ?? 0) === 0 && (
                 <Badge variant="destructive">Rupture</Badge>
               )}
             </div>
@@ -88,7 +88,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                 onClick={handleAddToCart}
                 className="w-full"
                 size="sm"
-                disabled={product.stock === 0}
+                disabled={(product.stock ?? 0) === 0}
               >
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 {isInCart(product.id) ? 'Dans le panier' : 'Ajouter au panier'}
@@ -126,9 +126,9 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               <span className="text-lg font-bold text-primary">
                 {formatPrice(product.price)}
               </span>
-              {product.compareAtPrice && (
+              {product.comparePrice && (
                 <span className="text-sm text-muted-foreground line-through">
-                  {formatPrice(product.compareAtPrice)}
+                  {formatPrice(product.comparePrice)}
                 </span>
               )}
             </div>
